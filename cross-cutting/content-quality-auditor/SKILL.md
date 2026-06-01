@@ -1,6 +1,6 @@
 ---
 name: content-quality-auditor
-description: 'Use when auditing content quality, E-E-A-T, publish readiness, or 内容质量/EEAT评分. Runs 80-item CORE-EEAT scoring with veto checks and fix plan.'
+description: 'Use when auditing content quality, E-E-A-T, or publish readiness; runs 80-item CORE-EEAT scoring with veto checks and a fix plan. Not for structural on-page tags/headers — use on-page-seo-auditor; not for domain/citation trust — use domain-authority-auditor. 内容质量/EEAT评分'
 version: "9.9.9"
 license: Apache-2.0
 allowed-tools: WebFetch
@@ -27,38 +27,14 @@ metadata:
     - 콘텐츠품질
     - auditoria-eeat
   triggers:
-    # EN-formal
     - "audit content quality"
-    - "EEAT score"
     - "CORE-EEAT audit"
-    - "content quality check"
-    # EN-casual
     - "is this ready to publish"
     - "grade my article"
-    - "check before publishing"
     - "is my content good enough to rank"
-    # EN-question
-    - "is my content ready to publish"
     - "how do I improve content quality"
-    # ZH-pro
     - "内容质量审计"
-    - "EEAT评分"
-    - "内容评估"
-    # ZH-casual
     - "文章能发吗"
-    - "内容打几分"
-    - "文章写得怎么样"
-    # JA
-    - "コンテンツ品質監査"
-    - "E-E-A-T評価"
-    # KO
-    - "콘텐츠 품질 감사"
-    - "EEAT 점수"
-    # ES
-    - "auditoría de calidad de contenido"
-    - "puntuación EEAT"
-    # PT
-    - "auditoria de qualidade"
 ---
 
 # Content Quality Auditor
@@ -128,9 +104,10 @@ Audit my content vs competitor: [your content] vs [competitor content]
 
 **Expected output**: a CORE-EEAT audit report, a publish-readiness verdict, and a short handoff summary ready for `memory/audits/content/`.
 
-- **Reads**: the target content, content type, supporting evidence, and any prior decisions from [CLAUDE.md](https://github.com/aaron-he-zhu/seo-geo-claude-skills/blob/main/CLAUDE.md) and the shared [State Model](https://github.com/aaron-he-zhu/seo-geo-claude-skills/blob/main/references/state-model.md) when available.
+- **Reads**: the target content, content type, and supporting evidence.
 - **Writes**: a user-facing audit report plus a reusable summary that can be stored under `memory/audits/content/`.
 - **Promotes**: veto items and publish blockers to `memory/hot-cache.md` (auto-saved, no user confirmation needed). Top improvement priorities to `memory/open-loops.md`.
+- **Done when**: all 80 CORE-EEAT items are scored or marked N/A, a SHIP/FIX/BLOCK verdict is stated, `cap_applied`/`raw_overall_score`/`final_overall_score` are set, and any veto (T04/C01/R10) is surfaced with a fix.
 - **Primary next skill**: use the `Next Best Skill` below once the verdict is clear.
 
 ## Data Sources
@@ -585,7 +562,7 @@ When an item cannot be evaluated (e.g., A01 Backlink Profile requires site-level
 
 **Example**: Authority dimension with 8 N/A items and 2 scored items (A05=8, A07=5):
 - Dimension score = (8+5) / (2 x 10) x 100 = 65
-- But 8/10 items are N/A (>50%), so flag as "Insufficient Data -- Authority"
+- But 8/10 items are N/A (>50%), so flag as "Insufficient Data — Authority"
 - Exclude A dimension from weighted total; redistribute its weight proportionally to remaining dimensions
 
 ### Per-Item Scores
@@ -658,7 +635,7 @@ Sorted by: weight × points lost across all tiers (highest impact first). This i
 
 ### Step 4.5: Apply Scoring Runbook
 
-Execute in order, referring to the `## Scoring Runbook (authoritative)` block earlier in this file:
+Execute in order, referring to the §1–§5 Auditor Runbook blocks earlier in this file:
 
 1. **Cap Enforcement** (Runbook §2): walk the decision table. Identify which scenario matches your input (0 veto, 1 veto above cap, 1 veto below cap, or 2+ veto). Apply the cap rule — remember it's a ceiling, not a floor. Set `cap_applied` in the handoff.
 2. **Artifact Gate Self-Check** (Runbook §4): run the 7-item checklist. If any item fails, force `status: BLOCKED` with reason in `open_loops`.
@@ -705,7 +682,7 @@ See [references/item-reference.md](https://github.com/aaron-he-zhu/seo-geo-claud
 ## Reference Materials
 
 - [CORE-EEAT Content Benchmark](https://github.com/aaron-he-zhu/seo-geo-claude-skills/blob/main/references/core-eeat-benchmark.md) — Full 80-item benchmark with dimension definitions, scoring criteria, and GEO-First item markers
-- [references/item-reference.md](https://github.com/aaron-he-zhu/seo-geo-claude-skills/blob/main/cross-cutting/content-quality-auditor/references/item-reference.md) — All 80 item IDs in a compact lookup table + site-level item handling notes + scored example report
+- [Item Reference](https://github.com/aaron-he-zhu/seo-geo-claude-skills/blob/main/cross-cutting/content-quality-auditor/references/item-reference.md) — All 80 item IDs in a compact lookup table + site-level item handling notes + scored example report
 
 ## Next Best Skill
 

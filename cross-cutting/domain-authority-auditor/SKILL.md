@@ -1,6 +1,6 @@
 ---
 name: domain-authority-auditor
-description: 'Use when auditing domain authority, trust, citations, or 域名权威/网站可信度. Runs 40-item CITE scoring with veto checks.'
+description: 'Use when auditing domain authority, trust, or citation credibility; runs 40-item CITE scoring with veto checks (TRUSTED/CAUTIOUS/UNTRUSTED). Not for page-level content quality — use content-quality-auditor; not for backlink profiling alone — use backlink-analyzer. 域名权威/网站可信度'
 version: "9.9.9"
 license: Apache-2.0
 compatibility: "Claude Code and compatible agent-skill hosts"
@@ -25,39 +25,14 @@ metadata:
     - 도메인권위
     - autoridad-dominio
   triggers:
-    # EN-formal
     - "audit domain authority"
     - "CITE audit"
     - "domain trust score"
-    - "domain rating"
-    - "site authority"
-    # EN-casual
     - "how trustworthy is my site"
-    - "is my domain credible"
     - "Google penalty recovery"
-    - "my site got penalized"
-    # EN-question
-    - "how authoritative is my site"
     - "what is my domain authority"
-    # ZH-pro
     - "域名权威审计"
     - "网站可信度"
-    - "域名评分"
-    # ZH-casual
-    - "域名可信吗"
-    - "权威度多少"
-    - "网站可信度怎么样"
-    # JA
-    - "ドメイン権威"
-    - "ドメイン評価"
-    # KO
-    - "도메인 권위"
-    - "도메인 신뢰도"
-    # ES
-    - "autoridad de dominio"
-    - "auditoría de dominio"
-    # PT
-    - "autoridade de domínio"
 ---
 
 # Domain Authority Auditor
@@ -128,9 +103,10 @@ Run full 120-item assessment on [domain]: CITE domain audit + CORE-EEAT content 
 
 **Expected output**: a CITE audit report, a citation-trust verdict, and a short handoff summary ready for `memory/audits/domain/`.
 
-- **Reads**: the target domain, supporting authority signals, comparison domains, and prior decisions from [CLAUDE.md](https://github.com/aaron-he-zhu/seo-geo-claude-skills/blob/main/CLAUDE.md) and the shared [State Model](https://github.com/aaron-he-zhu/seo-geo-claude-skills/blob/main/references/state-model.md) when available.
+- **Reads**: the target domain, supporting authority signals, and comparison domains.
 - **Writes**: a user-facing authority report plus a reusable summary that can be stored under `memory/audits/domain/`.
 - **Promotes**: veto items and domain risks to `memory/hot-cache.md` (auto-saved). Authority context to `memory/audits/domain/`. Results feed into entity-optimizer as authority input for brand's canonical profile.
+- **Done when**: all 40 CITE items are scored or marked N/A with a named source, a TRUSTED/CAUTIOUS/UNTRUSTED verdict is stated, and any veto (T03/T05/T09) is surfaced with a fix.
 - **Primary next skill**: use the `Next Best Skill` below once the trust picture is clear.
 
 ## Data Sources
@@ -151,6 +127,21 @@ Ask the user to provide:
 5. Competitor domains for comparison (optional)
 
 Proceed with the full 40-item audit using provided data. Note in the output which items could not be fully evaluated due to missing access (e.g., AI citation data, knowledge graph queries, WHOIS history).
+
+## Decision Gates
+
+When stopping to ask, always: (1) state the specific value and threshold, (2) offer numbered options with outcomes.
+
+**Stop and ask the user when:**
+- The domain is not resolvable or its type cannot be detected — state what you found and confirm the domain type before scoring
+- No backlink / referring-domain data is provided and none is inferable — offer: (1) provide an export, (2) score the observable CITE items and mark link-dependent items N/A
+- More than 50% of a CITE dimension's items are N/A — name the dimension and ask: (1) provide supplementary data, (2) mark the dimension Insufficient Data
+- Any veto item (T03, T05, or T09) triggers — flag it immediately with the item ID and ask: (1) stop for immediate fix, (2) continue full audit and flag in report
+
+**Continue silently (never stop for):**
+- Missing AI-citation data (mark items N/A and continue)
+- Individual Partial scores within a dimension
+- Low overall score (the report is the deliverable, not a judgment call)
 
 ## Instructions
 
@@ -653,7 +644,7 @@ For a complete assessment, pair this CITE audit with a CORE-EEAT content audit:
 
 ### Step 4.5: Apply Scoring Runbook
 
-Execute in order, referring to the `## Scoring Runbook (authoritative)` block earlier in this file:
+Execute in order, referring to the §1–§5 Auditor Runbook blocks earlier in this file:
 
 1. **Cap Enforcement** (Runbook §2): walk the decision table. Identify which scenario matches your input (0 veto, 1 veto above cap, 1 veto below cap, or 2+ veto). Apply the cap rule — remember it's a ceiling, not a floor. Set `cap_applied` in the handoff. For CITE, single-veto fails also raise a **Manipulation Alert** entry in `open_loops`.
 2. **Artifact Gate Self-Check** (Runbook §4): run the 7-item checklist. If any item fails, force `status: BLOCKED` with reason in `open_loops`.
@@ -684,7 +675,7 @@ Ask "Save these results for future sessions?" — if yes, write `YYYY-MM-DD-<top
 
 ## Example
 
-See [references/example-report.md](https://github.com/aaron-he-zhu/seo-geo-claude-skills/blob/main/cross-cutting/domain-authority-auditor/references/example-report.md) for a complete CITE audit of cloudhosting.com showing veto check, dimension scores, top 5 improvements, action plan, and cross-reference with CORE-EEAT.
+See [Example Report](https://github.com/aaron-he-zhu/seo-geo-claude-skills/blob/main/cross-cutting/domain-authority-auditor/references/example-report.md) for a complete CITE audit of cloudhosting.com showing veto check, dimension scores, top 5 improvements, action plan, and cross-reference with CORE-EEAT.
 
 ## Tips for Success
 

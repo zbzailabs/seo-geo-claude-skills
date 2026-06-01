@@ -73,7 +73,17 @@ For release bumps, also sync README badges, localized README badges, and both ma
 
 Keep changes focused. Bump both top-level `version` and `metadata.version` together. Update `VERSIONS.md`. Put new reference docs in the skill's `references/` subdirectory.
 
-## Quality Checklist
+## Craft Checklist
+
+Beyond the mechanical checks, every skill should pass the senior self-test from [skill-contract.md §Skill Authoring Discipline](https://github.com/aaron-he-zhu/seo-geo-claude-skills/blob/main/references/skill-contract.md):
+
+- [ ] **Simplicity** — would a senior engineer call this skill overcomplicated? Every section traces to the user's task.
+- [ ] **Boundary** — the `description` ends with a `Not for X — use Y` clause so it doesn't compete with a sibling skill.
+- [ ] **Verifiable** — the Skill Contract states a `Done when:` with checkable conditions.
+- [ ] **Honest data** — Instructions tell the model to label Measured / User-provided / Estimated and never invent numbers.
+- [ ] **Surgical handoff** — Next Best Skill points to exactly one primary move.
+
+## Quality Checklist (mechanical)
 
 Before submitting a PR:
 

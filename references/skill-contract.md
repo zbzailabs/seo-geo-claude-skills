@@ -2,6 +2,17 @@
 
 This repository uses one contract across all 20 skills. The contract keeps each skill specialized while making the full library feel like one operating system.
 
+## Skill Authoring Discipline
+
+Four principles every skill must satisfy (high-signal LLM-coding guidance, adapted for skills):
+
+1. **Focus & simplicity.** Every section traces to the user's task; cut speculative options and single-use abstraction. *Test: would a senior engineer call this skill overcomplicated?*
+2. **Verifiable success criteria.** Define what "done" looks like and a checkable output, not a vague imperative. *Test: could someone confirm the skill succeeded without re-reading the request?*
+3. **Surface assumptions; never fabricate.** State assumptions and proceed labeled (or ask on genuine ambiguity); label every metric **Measured / User-provided / Estimated** and never present an estimate as measured. *Test: can a reader tell which numbers are real?*
+4. **Surgical handoff.** Recommend exactly one primary next move and let the global termination rules end the chain. *Test: does the handoff point somewhere, then stop?*
+
+These are operationalized below in Description Standard, the Skill Contract `Done when` line, Decision Gates, and the Termination rules. Execution skills should **restate** the load-bearing rule in-body so it loads at activation, not only link it.
+
 ## Required Top Sections
 
 Every `SKILL.md` must expose these compact operating sections:
@@ -37,7 +48,17 @@ Optional sections such as `What This Skill Does`, `Example`, `Tips for Success`,
 | `homepage` | URL | Optional | Skill homepage |
 | `class` | `auditor` | Optional (required for auditor-class) | Marks the skill as a protocol-layer auditor that inlines [auditor-runbook.md](https://github.com/aaron-he-zhu/seo-geo-claude-skills/blob/main/references/auditor-runbook.md). |
 
-Note: `when_to_use` uses underscores (not hyphens). This matches Claude Code's internal parser.
+Note: `when_to_use` uses underscores (not hyphens). This matches Claude Code's internal parser. Place `allowed-tools` after `argument-hint` and before `metadata` for consistency.
+
+## Description Standard
+
+`description` is the primary activation surface (vector-search discovery). Write it as:
+
+> Use when the user asks to "&lt;trigger&gt;"; &lt;2-4 concrete outcomes&gt;. Not for &lt;adjacent intent&gt; — use &lt;sibling-skill&gt;.
+
+- Lead with the quoted user phrasing, name concrete outputs, and end with **one scope-boundary clause** routing adjacent intent to the right sibling skill. That boundary is what stops two skills competing for the same request.
+- `metadata.triggers`: keep ≤ ~10 canonical phrases that are NOT already in the description and are uniquely owned by this skill — do not mirror the description or the tags block. Collapse multilingual phrasing to the 1-2 highest-value non-English entries; the rest belong in `tags`.
+- Keep `description` and `when_to_use` scope-consistent — neither broader than the other.
 
 ## Section Meanings
 
@@ -67,11 +88,12 @@ Include:
 
 ### Skill Contract
 
-This section defines operational behavior in four fields:
+This section defines operational behavior:
 
-- **Reads**: user-provided inputs, tool data, and prior project state
+- **Reads**: user-provided inputs and tool data specific to this skill. (All skills implicitly read prior project state from `CLAUDE.md` and the State Model when available — do not repeat that global read in each skill's Reads line.)
 - **Writes**: the main user-facing deliverable plus a reusable handoff summary
 - **Promotes**: stable facts, blockers, and decisions worth storing for future work
+- **Done when**: 2-3 checkable conditions confirming the deliverable is complete (the skill's verifiable success criteria)
 - **Primary next skill**: the most natural follow-up skill in the library
 
 ### Termination rules for Next Best Skill chains
@@ -94,7 +116,8 @@ Every skill should be able to produce a concise handoff summary using this shape
 - **Status**: DONE / DONE_WITH_CONCERNS / BLOCKED / NEEDS_INPUT
 - **Objective**: what was analyzed, created, or fixed
 - **Key Findings / Output**: the highest-signal result
-- **Evidence**: URLs, data points, or sections reviewed
+- **Evidence**: URLs, data points, or sections reviewed (label each Measured / User-provided / Estimated)
+- **Assumptions**: any inferences made to proceed, or "none"
 - **Open Loops**: blockers, missing inputs, or unresolved risks
 - **Recommended Next Skill**: one primary next move
 ```
@@ -109,7 +132,16 @@ Auditor-class skills (whose deliverable is a scored audit with a verdict — cur
 
 These fields are authoritative in [references/auditor-runbook.md §1](https://github.com/aaron-he-zhu/seo-geo-claude-skills/blob/main/references/auditor-runbook.md). Non-auditor skills do not emit them.
 
-**Legacy compatibility**: consumers may read pre-v7.2 archived auditor outputs defensively by assuming `cap_applied: false` and treating the available overall score as both raw and final. New auditor-class outputs MUST include the three auditor-extension fields; the Artifact Gate treats missing `cap_applied`, `raw_overall_score`, or `final_overall_score` (unless `status: BLOCKED`) as a validation failure.
+New auditor-class outputs MUST include the three auditor-extension fields; the Artifact Gate treats missing `cap_applied`, `raw_overall_score`, or `final_overall_score` (unless `status: BLOCKED`) as a validation failure.
+
+## Decision Gates
+
+When a skill can hit a genuine ambiguity or missing-input fork, give it a compact two-column gate so it neither guesses nor over-asks:
+
+- **Stop and ask** — only for blocking ambiguities; present numbered options with their outcomes (e.g., no target provided and none inferable from context).
+- **Continue silently** — list the non-blocking cases the skill must NOT stop for (e.g., which 3 of 5 competitors to deep-dive; missing optional tool data → mark N/A and proceed).
+
+Keep it to the 1-2 real forks per skill. The two auditors' `## Decision Gates` sections are the reference implementation.
 
 ## Promotion Rules
 
